@@ -1,20 +1,20 @@
 
 title: My Resume
 url: 'https://ujwal-k.github.io/'
-baseurl: '/ujwalBLOG' #change it according to your repository name
+baseurl: '/ujwalBLOG' 
 
 
 
 # Profile information
-yourname: Ravi Jain  ## put your name
-title: 'GRAPHIC &amp; WEB DESIGNER'  ## your title
-location: San Francisco , CA
+yourname: Ujwal Kumar 
+title: 'Sir MVIT || Microsoft Student Partner || CyberSec || Machine learning enthusiast || Debator ||' 
+location: Bangalore, Karnataka, India
 
 
 ## Social Profiles
 facebook: http://www.facebook.com  ## your facebook account url
-twitter: http://www.twitter.com  ## your twitter account url
-linkedin: http://www.linkedin.com  ## your linkedin account url
+twitter: http://www.twitter.com/Ujwal07kumar  ## your twitter account url
+linkedin: https://www.linkedin.com/in/ujwal-kumar-a096b179/  ## your linkedin account url
 dribbble: http://www.dribble.com  ## you dribbble account url
 foursquare: http://www.foursquare.com  ## your foursquare account url
 
