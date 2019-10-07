@@ -1065,6 +1065,7 @@ ul.about {
         font-size: 24px;	
     }
     .widget-profil h1 {
+	color: white;
         font-size: 25px;
         line-height: 60px;
     }
@@ -1080,6 +1081,7 @@ ul.about {
     }
 
     .widget-profil h1 {
+	color: white;
         font-size: 24px;
         line-height: 50px;
     }
@@ -1088,6 +1090,7 @@ ul.about {
 
 @media only screen and (max-width: 260px) {
     .widget-profil h1 {
+	color: white;
         font-size: 25px !important;
         line-height: 39px !important;
     }
@@ -1123,6 +1126,7 @@ ul.about {
     }
 
     .widget-profil h1 {
+	color: white;
         font-size: 22px !important;
         line-height: 39px !important;
     }
