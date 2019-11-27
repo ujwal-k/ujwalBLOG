@@ -1,0 +1,619 @@
+<html>
+<head>
+<style type="text/css">
+p, pre
+{
+display:none;
+ color:white;
+  font-size:20px;
+}
+
+button
+{
+  height:50px;
+  width:50px;
+ }
+</style>
+<script type="text/javascript">
+function copyToClipboard(element) {
+  var $temp = $("<input>");
+  $("body").append($temp);
+  $temp.val($(element).text()).select();
+  document.execCommand("copy");
+  $temp.remove();
+}
+</script>
+</head>
+<body>
+<link href='https://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'> 
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+
+<button onclick="copyToClipboard('#p1')">A</button>
+
+<button onclick="copyToClipboard('#p2')">D</button>
+
+<button onclick="copyToClipboard('#p3')">F</button>
+
+<button onclick="copyToClipboard('#p4')">K</button>
+
+<button onclick="copyToClipboard('#p5')">N</button>
+ 
+
+       
+<center>
+
+<pre id="p1">
+import collections
+class aprori:
+    def __init__ (self, filename, min_support = 3):
+        self.min_support=min_support
+        lines = open('./data/{}.txt'.format(filename))
+        self.It1 = {}
+        self.filename=filename
+        for line in lines:
+            items = line.split()
+            for item in items:
+                if item in self.It1:
+                    self.It1[item]+=1
+                else:
+                    self.It1[item]=1
+        lines.close()
+    
+    def eliminate(self, itemset):
+        L = []
+        for item in itemset:
+            if itemset[item] >= self.min_support:
+                L.append(item)
+        return sorted(L)
+    
+    def count(self, itemset):
+        L = {}
+        lines = open('./data/{0}.txt'.format(self.filename))
+        for line in lines:
+            chars = line.split()
+            for item in itemset:
+                if item not in L:
+                    L[item]=0
+                isTrue = True
+                for char in item:
+                    if char not in chars:
+                        isTrue=False
+                        break
+                if isTrue:
+                    L[item]+=1
+        return L
+    
+    def generate(self, itemset):
+        L =[]
+        for i in range(0,len(itemset)):
+            element = str(itemset[i])
+            for j in range(i+1,len(itemset)):
+                element1 = str(itemset[j])
+                if element[0:(len(element)-1)] == element1[0:(len(element)-1)]:
+                    unionset = element[0:(len(element)-1)]+element[len(element)-1]+element1[len(element)-1]
+                    unionset = ''.join(sorted(unionset))
+                    L.append(unionset)
+        return L
+    def repeat(self):
+        akk = list()
+        L = self.It1
+        C1 = collections.OrderedDict(L)
+        L=self.eliminate(C1)
+        k=1
+        while(L!=[]):
+            C = self.count(L)
+            S = self.eliminate(C)
+            print('=====================================')
+            print('{} Frequency Set'.format(k))
+            print(S)
+            akk+=S
+            print('=====================================')
+            L = self.generate(S)
+            k+=1
+        print(akk)
+ap = aprori("example")
+ap.repeat()
+</pre>
+<pre id="p2">
+"""
+Make the imports of python packages needed
+"""
+import pandas as pd
+import numpy as np
+from pprint import pprint
+#Import the dataset and define the feature as well as the target datasets / columns#
+dataset = pd.read_csv('data/zoo.csv',
+                      names=['animal_name','hair','feathers','eggs','milk',
+                                                   'airbone','aquatic','predator','toothed','backbone',
+                                                  'breathes','venomous','fins','legs','tail','domestic','catsize','class',])#Import all columns omitting the fist which consists the names of the animals
+#We drop the animal names since this is not a good feature to split the data on
+dataset=dataset.drop('animal_name',axis=1)
+###################
+def entropy(target_col):
+    """
+    Calculate the entropy of a dataset.
+    The only parameter of this function is the target_col parameter which specifies the target column
+    """
+    elements,counts = np.unique(target_col,return_counts = True)
+    entropy = np.sum([(-counts[i]/np.sum(counts))*np.log2(counts[i]/np.sum(counts)) for i in range(len(elements))])
+    return entropy
+################### 
+    
+###################
+def InfoGain(data,split_attribute_name,target_name="class"):
+    """
+    Calculate the information gain of a dataset. This function takes three parameters:
+    1. data = The dataset for whose feature the IG should be calculated
+    2. split_attribute_name = the name of the feature for which the information gain should be calculated
+    3. target_name = the name of the target feature. The default for this example is "class"
+    """    
+    #Calculate the entropy of the total dataset
+    total_entropy = entropy(data[target_name])
+    
+    ##Calculate the entropy of the dataset
+    
+    #Calculate the values and the corresponding counts for the split attribute 
+    vals,counts= np.unique(data[split_attribute_name],return_counts=True)
+    
+    #Calculate the weighted entropy
+    Weighted_Entropy = np.sum([(counts[i]/np.sum(counts))*entropy(data.where(data[split_attribute_name]==vals[i]).dropna()[target_name]) for i in range(len(vals))])
+    
+    #Calculate the information gain
+    Information_Gain = total_entropy - Weighted_Entropy
+    return Information_Gain
+       
+###################
+###################
+def ID3(data,originaldata,features,target_attribute_name="class",parent_node_class = None):
+    """
+    ID3 Algorithm: This function takes five paramters:
+    1. data = the data for which the ID3 algorithm should be run --> In the first run this equals the total dataset
+ 
+    2. originaldata = This is the original dataset needed to calculate the mode target feature value of the original dataset
+    in the case the dataset delivered by the first parameter is empty
+    3. features = the feature space of the dataset . This is needed for the recursive call since during the tree growing process
+    we have to remove features from our dataset --> Splitting at each node
+    4. target_attribute_name = the name of the target attribute
+    5. parent_node_class = This is the value or class of the mode target feature value of the parent node for a specific node. This is 
+    also needed for the recursive call since if the splitting leads to a situation that there are no more features left in the feature
+    space, we want to return the mode target feature value of the direct parent node.
+    """   
+    #Define the stopping criteria --> If one of this is satisfied, we want to return a leaf node#
+    
+    #If all target_values have the same value, return this value
+    if len(np.unique(data[target_attribute_name])) <= 1:
+        return np.unique(data[target_attribute_name])[0]
+    
+    #If the dataset is empty, return the mode target feature value in the original dataset
+    elif len(data)==0:
+        return np.unique(originaldata[target_attribute_name])[np.argmax(np.unique(originaldata[target_attribute_name],return_counts=True)[1])]
+    
+    #If the feature space is empty, return the mode target feature value of the direct parent node --> Note that
+    #the direct parent node is that node which has called the current run of the ID3 algorithm and hence
+    #the mode target feature value is stored in the parent_node_class variable.
+    
+    elif len(features) ==0:
+        return parent_node_class
+    
+    #If none of the above holds true, grow the tree!
+    
+    else:
+        #Set the default value for this node --> The mode target feature value of the current node
+        parent_node_class = np.unique(data[target_attribute_name])[np.argmax(np.unique(data[target_attribute_name],return_counts=True)[1])]
+        
+        #Select the feature which best splits the dataset
+        item_values = [InfoGain(data,feature,target_attribute_name) for feature in features] #Return the information gain values for the features in the dataset
+        best_feature_index = np.argmax(item_values)
+        best_feature = features[best_feature_index]
+        
+        #Create the tree structure. The root gets the name of the feature (best_feature) with the maximum information
+        #gain in the first run
+        tree = {best_feature:{}}
+        
+        
+        #Remove the feature with the best inforamtion gain from the feature space
+        features = [i for i in features if i != best_feature]
+        
+        #Grow a branch under the root node for each possible value of the root node feature
+        
+        for value in np.unique(data[best_feature]):
+            value = value
+            #Split the dataset along the value of the feature with the largest information gain and therwith create sub_datasets
+            sub_data = data.where(data[best_feature] == value).dropna()
+            
+            #Call the ID3 algorithm for each of those sub_datasets with the new parameters --> Here the recursion comes in!
+            subtree = ID3(sub_data,dataset,features,target_attribute_name,parent_node_class)
+            
+            #Add the sub tree, grown from the sub_dataset to the tree under the root node
+            tree[best_feature][value] = subtree
+            
+        return(tree)    
+                
+###################
+###################
+    
+    
+def predict(query,tree,default = 1):
+    """
+    Prediction of a new/unseen query instance. This takes two parameters:
+    1. The query instance as a dictionary of the shape {"feature_name":feature_value,...}
+    2. The tree 
+    We do this also in a recursive manner. That is, we wander down the tree and check if we have reached a leaf or if we are still in a sub tree. 
+    Since this is a important step to understand, the single steps are extensively commented below.
+    1.Check for every feature in the query instance if this feature is existing in the tree.keys() for the first call, 
+    tree.keys() only contains the value for the root node 
+    --> if this value is not existing, we can not make a prediction and have to 
+    return the default value which is the majority value of the target feature
+    2. First of all we have to take care of a important fact: Since we train our model with a database A and then show our model
+    a unseen query it may happen that the feature values of these query are not existing in our tree model because non of the
+    training instances has had such a value for this specific feature. 
+    For instance imagine the situation where your model has only seen animals with one to four
+    legs - The "legs" node in your model will only have four outgoing branches (from one to four). If you now show your model
+    a new instance (animal) which has for the legs feature the vale 5, you have to tell your model what to do in such a 
+    situation because otherwise there is no classification possible because in the classification step you try to 
+    run down the outgoing branch with the value 5 but there is no such a branch. Hence: Error and no Classification!
+    We can address this issue with a classification value of for instance (999) which tells us that there is no classification
+    possible or we assign the most frequent target feature value of our dataset used to train the model. Or, in for instance 
+    medical application we can return the most worse case - just to make sure... 
+    We can also return the most frequent value of the direct parent node. To make a long story short, we have to tell the model 
+    what to do in this situation.
+    In our example, since we are dealing with animal species where a false classification is not that critical, we will assign
+    the value 1 which is the value for the mammal species (for convenience).
+    3. Address the key in the tree which fits the value for key --> Note that key == the features in the query. 
+    Because we want the tree to predict the value which is hidden under the key value (imagine you have a drawn tree model on 
+    the table in front of you and you have a query instance for which you want to predict the target feature 
+    - What are you doing? - Correct:
+    You start at the root node and wander down the tree comparing your query to the node values. Hence you want to have the
+    value which is hidden under the current node. If this is a leaf, perfect, otherwise you wander the tree deeper until you
+    get to a leaf node. 
+    Though, you want to have this "something" [either leaf or sub_tree] which is hidden under the current node
+    and hence we must address the node in the tree which == the key value from our query instance. 
+    This is done with tree[keys]. Next you want to run down the branch of this node which is equal to the value given "behind"
+    the key value of your query instance e.g. if you find "legs" == to tree.keys() that is, for the first run == the root node.
+    You want to run deeper and therefore you have to address the branch at your node whose value is == to the value behind key.
+    This is done with query[key] e.g. query[key] == query['legs'] == 0 --> Therewith we run down the branch of the node with the
+    value 0. Summarized, in this step we want to address the node which is hidden behind a specific branch of the root node (in the first run)
+    this is done with: result = [key][query[key]]
+    4. As said in the 2. step, we run down the tree along nodes and branches until we get to a leaf node.
+    That is, if result = tree[key][query[key]] returns another tree object (we have represented this by a dict object --> 
+    that is if result is a dict object) we know that we have not arrived at a root node and have to run deeper the tree. 
+    Okay... Look at your drawn tree in front of you... what are you doing?...well, you run down the next branch... 
+    exactly as we have done it above with the slight difference that we already have passed a node and therewith 
+    have to run only a fraction of the tree --> You clever guy! That "fraction of the tree" is exactly what we have stored
+    under 'result'.
+    So we simply call our predict method using the same query instance (we do not have to drop any features from the query
+    instance since for instance the feature for the root node will not be available in any of the deeper sub_trees and hence 
+    we will simply not find that feature) as well as the "reduced / sub_tree" stored in result.
+    SUMMARIZED: If we have a query instance consisting of values for features, we take this features and check if the 
+    name of the root node is equal to one of the query features.
+    If this is true, we run down the root node outgoing branch whose value equals the value of query feature == the root node.
+    If we find at the end of this branch a leaf node (not a dict object) we return this value (this is our prediction).
+    If we instead find another node (== sub_tree == dict objct) we search in our query for the feature which equals the value 
+    of that node. Next we look up the value of our query feature and run down the branch whose value is equal to the 
+    query[key] == query feature value. And as you can see this is exactly the recursion we talked about
+    with the important fact that for each node we run down the tree, we check only the nodes and branches which are 
+    below this node and do not run the whole tree beginning at the root node 
+    --> This is why we re-call the classification function with 'result'
+    """
+    
+    
+    #1.
+    for key in list(query.keys()):
+        if key in list(tree.keys()):
+            #2.
+            try:
+                result = tree[key][query[key]] 
+            except:
+                return default
+  
+            #3.
+            result = tree[key][query[key]]
+            #4.
+            if isinstance(result,dict):
+                return predict(query,result)
+            else:
+                return result
+        
+        
+"""
+Check the accuracy of our prediction.
+The train_test_split function takes the dataset as parameter which should be divided into
+a training and a testing set. The test function takes two parameters, which are the testing data as well as the tree model.
+"""
+###################
+###################
+def train_test_split(dataset):
+    training_data = dataset.iloc[:80].reset_index(drop=True)#We drop the index respectively relabel the index
+    #starting form 0, because we do not want to run into errors regarding the row labels / indexes
+    testing_data = dataset.iloc[80:].reset_index(drop=True)
+    return training_data,testing_data
+training_data = train_test_split(dataset)[0]
+testing_data = train_test_split(dataset)[1] 
+def test(data,tree):
+    #Create new query instances by simply removing the target feature column from the original dataset and 
+    #convert it to a dictionary
+    queries = data.iloc[:,:-1].to_dict(orient = "records")
+    
+    #Create a empty DataFrame in whose columns the prediction of the tree are stored
+    predicted = pd.DataFrame(columns=["predicted"]) 
+    
+    #Calculate the prediction accuracy
+    for i in range(len(data)):
+        predicted.loc[i,"predicted"] = predict(queries[i],tree,1.0) 
+    print('The prediction accuracy is: ',(np.sum(predicted["predicted"] == data["class"])/len(data))*100,'%')
+    
+"""
+Train the tree, Print the tree and predict the accuracy
+"""
+tree = ID3(training_data,training_data,training_data.columns[:-1])
+pprint(tree)
+test(testing_data,tree)</pre><br/>
+<pre  id="p3">import time
+
+#Function to load file and return lists of Transactions
+def Load_data(filename):
+    with open(filename) as f:
+        content = f.readlines()
+
+    content = [x.strip() for x in content]
+    Transaction = []
+
+    for i in range(0, len(content)):
+        Transaction.append(content[i].split())
+
+    return Transaction
+
+#To convert initial transaction into frozenset
+def create_initialset(dataset):
+    retDict = {}
+    for trans in dataset:
+        retDict[frozenset(trans)] = 1
+    return retDict
+
+#class of FP TREE node
+class TreeNode:
+    def __init__(self, Node_name,counter,parentNode):
+        self.name = Node_name
+        self.count = counter
+        self.nodeLink = None
+        self.parent = parentNode
+        self.children = {}
+        
+    def increment_counter(self, counter):
+        self.count += counter
+
+#To create Headertable and ordered itemsets for FP Tree
+def create_FPTree(dataset, minSupport):
+    HeaderTable = {}
+    for transaction in dataset:
+        for item in transaction:
+            HeaderTable[item] = HeaderTable.get(item,0) + dataset[transaction]
+    for k in list(HeaderTable):
+        if HeaderTable[k] < minSupport:
+            del(HeaderTable[k])
+
+    frequent_itemset = set(HeaderTable.keys())
+
+    if len(frequent_itemset) == 0:
+        return None, None
+
+    for k in HeaderTable:
+        HeaderTable[k] = [HeaderTable[k], None]
+
+    retTree = TreeNode('Null Set',1,None)
+    for itemset,count in dataset.items():
+        frequent_transaction = {}
+        for item in itemset:
+            if item in frequent_itemset:
+                frequent_transaction[item] = HeaderTable[item][0]
+        if len(frequent_transaction) > 0:
+            #to get ordered itemsets form transactions
+            ordered_itemset = [v[0] for v in sorted(frequent_transaction.items(), key=lambda p: p[1], reverse=True)]
+            #to update the FPTree
+            updateTree(ordered_itemset, retTree, HeaderTable, count)
+    return retTree, HeaderTable
+
+#To create the FP Tree using ordered itemsets
+def updateTree(itemset, FPTree, HeaderTable, count):
+    if itemset[0] in FPTree.children:
+        FPTree.children[itemset[0]].increment_counter(count)
+    else:
+        FPTree.children[itemset[0]] = TreeNode(itemset[0], count, FPTree)
+
+        if HeaderTable[itemset[0]][1] == None:
+            HeaderTable[itemset[0]][1] = FPTree.children[itemset[0]]
+        else:
+            update_NodeLink(HeaderTable[itemset[0]][1], FPTree.children[itemset[0]])
+
+    if len(itemset) > 1:
+        updateTree(itemset[1::], FPTree.children[itemset[0]], HeaderTable, count)
+
+#To update the link of node in FP Tree
+def update_NodeLink(Test_Node, Target_Node):
+    while (Test_Node.nodeLink != None):
+        Test_Node = Test_Node.nodeLink
+
+    Test_Node.nodeLink = Target_Node
+
+#To transverse FPTree in upward direction
+def FPTree_uptransveral(leaf_Node, prefixPath):
+ if leaf_Node.parent != None:
+    prefixPath.append(leaf_Node.name)
+    FPTree_uptransveral(leaf_Node.parent, prefixPath)
+
+#To find conditional Pattern Bases
+def find_prefix_path(basePat, TreeNode):
+ Conditional_patterns_base = {}
+
+ while TreeNode != None:
+    prefixPath = []
+    FPTree_uptransveral(TreeNode, prefixPath)
+    if len(prefixPath) > 1:
+        Conditional_patterns_base[frozenset(prefixPath[1:])] = TreeNode.count
+    TreeNode = TreeNode.nodeLink
+
+ return Conditional_patterns_base
+
+#function to mine recursively conditional patterns base and conditional FP tree
+def Mine_Tree(FPTree, HeaderTable, minSupport, prefix, frequent_itemset):
+    bigL = [v[0] for v in sorted(HeaderTable.items(),key=lambda p: p[1][0])]
+    for basePat in bigL:
+        new_frequentset = prefix.copy()
+        new_frequentset.add(basePat)
+        #add frequent itemset to final list of frequent itemsets
+        frequent_itemset.append(new_frequentset)
+        #get all conditional pattern bases for item or itemsets
+        Conditional_pattern_bases = find_prefix_path(basePat, HeaderTable[basePat][1])
+        #call FP Tree construction to make conditional FP Tree
+        Conditional_FPTree, Conditional_header = create_FPTree(Conditional_pattern_bases,minSupport)
+
+        if Conditional_header != None:
+            Mine_Tree(Conditional_FPTree, Conditional_header, minSupport, new_frequentset, frequent_itemset)
+
+#to take input of filename and minimum support
+print("Enter the filename:")
+filename = input()
+print("Enter the minimum support count:")
+min_Support = int(input())
+
+initSet = create_initialset(Load_data(filename))
+start = time.time()
+FPtree, HeaderTable = create_FPTree(initSet, min_Support)
+
+frequent_itemset = []
+#call function to mine all ferquent itemsets
+Mine_Tree(FPtree, HeaderTable, min_Support, set([]), frequent_itemset)
+end = time.time()
+
+print("Time Taken is:")
+print(end-start)
+print("All frequent itemsets:")
+print(frequent_itemset)
+</pre>
+
+<pre id="p4">
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+class K_means:
+    def __init__(self, k=3, threshold=0.00001, max_iteration=500):
+        self.k=k
+        self.threshold=threshold
+        self.max_iteration=max_iteration
+    
+    def fit(self, data): 
+        self.centroids = {}
+        for i in range(self.k):
+            self.centroids[i]=data[i]
+        for i in range(self.max_iteration):
+            self.classes = {}
+            for i in range(self.k): 
+                self.classes[i] = []
+            for feature in data:
+                distances = [np.linalg.norm(feature-self.centroids[centroid]) for centroid in self.centroids]
+                classification = distances.index(min(distances))
+                self.classes[classification].append(feature)
+            self.isTrue=True
+            prev_centroids = dict(self.centroids)
+            for i in range(self.k):
+                self.centroids[i] = np.average(self.classes[i], axis=0)
+            for i in range(self.k):
+                if np.sum((self.centroids[i]-prev_centroids[i])/prev_centroids[i]) > self.threshold:
+                    isTrue = False
+            if isTrue==True:
+                break
+            
+    def pred(self, data):
+        distances = [np.linalg.norm(data-self.centroids[centroid]) for centroid in self.centroids]
+        classification = distances.index(min(distances))
+        return classification
+def main():
+    df = pd.read_csv(r"./data/ipl.csv")
+    df = df[['one','two']]
+    #dataset = df.astype(float).values.tolist()
+    X = df.values
+    km = K_means(3)
+    km.fit(X)
+    
+    colors = ['r', 'c', 'g', 'b', 'y']
+    markers = ['+', 'x','*','<','>']
+    
+    for centroid in km.centroids:
+        plt.scatter(km.centroids[centroid][0], km.centroids[centroid][1], color="black", s = 150, marker = "x")
+        plt.scatter(km.centroids[centroid][0], km.centroids[centroid][1], color="black", marker="o", s=50)
+
+    for classes in km.classes:
+        color = colors[classes]
+        marker = markers[classes]
+        for data in km.classes[classes]:
+            plt.scatter(data[0], data[1], color=color, marker=marker, s=50)
+    
+    pred=km.pred([0.5,0.5])
+    print("Cluster: {0}  Color: {1}".format(pred+1,colors[pred]))
+    print()
+    plt.scatter(0.5, 0.5, color="purple", marker="^", s=80)
+            
+if __name__ == "__main__":
+    main()
+</pre><br/>
+<pre id="p5">
+import numpy as np
+import pandas as pd
+class naive_bayes:
+    def __init__ (self, data):
+        self.prob_males = data['Gender'][data['Gender']=='Male'].count()/data['Gender'].count()
+        self.prob_females = data['Gender'][data['Gender']=='Female'].count()/data['Gender'].count()
+        
+        self.means = data.groupby('Gender').mean()
+        #print(means)
+        self.height_mean_male = self.means['Height'][self.means.index == 'Male'].values[0]
+        self.height_mean_female = self.means['Height'][self.means.index=='Female'].values[0]
+        self.weight_mean_male = self.means['Weight'][self.means.index=='Male'].values[0]
+        self.weight_mean_female = self.means['Weight'][self.means.index=='Female'].values[0]
+        self.footsize_mean_male = self.means['FootSize'][self.means.index=='Male'].values[0]
+        self.footsize_mean_female = self.means['FootSize'][self.means.index=='Female'].values[0]
+        
+        self.var = data.groupby('Gender').var()
+        self.height_var_male = self.var['Height'][self.var.index=='Male'].values[0]
+        self.height_var_female = self.var['Height'][self.var.index=='Female'].values[0]
+        self.weight_var_male = self.var['Weight'][self.var.index=='Male'].values[0]
+        self.weight_var_female = self.var['Weight'][self.var.index=='Female'].values[0]
+        self.footsize_var_male = self.var['FootSize'][self.var.index=='Male'].values[0]
+        self.footsize_var_female = self.var['FootSize'][self.var.index=='Female'].values[0]
+        
+    def y_x(self, x, var, mean):
+        return (1/np.sqrt(2*np.pi*var))*np.exp(-(x-mean)**2/(2*var))
+    
+    def predict(self, data):
+        h_m = self.y_x(data['Height'][0], self.height_var_male, self.height_mean_male)
+        w_m = self.y_x(data['Weight'][0], self.weight_var_male, self.weight_mean_male)
+        f_m = self.y_x(data['FootSize'][0], self.footsize_var_male, self.footsize_mean_male)
+        h_f = self.y_x(data['Height'][0], self.height_var_female, self.height_mean_female)
+        w_f = self.y_x(data['Weight'][0], self.weight_var_female, self.weight_mean_female)
+        f_f = self.y_x(data['FootSize'][0], self.footsize_var_female, self.footsize_mean_female)
+        male=self.prob_males*h_m*w_m*f_m;
+        female=self.prob_females*h_f*w_f*f_f;
+        return [male, female]
+def main():
+    td = pd.DataFrame();
+    td['Gender'] = ['Male','Male','Male','Male','Female','Female','Female','Female']
+    td['Height'] = [6,5.92,5.58,5.92,5,5.5,5.42,5.75]
+    td['Weight'] = [180,190,170,165,100,150,130,150]
+    td['FootSize'] = [12,11,12,10,6,8,7,9]
+    nb = naive_bayes(td)
+    person = pd.DataFrame()
+    person['Height'] = [6]
+    person['Weight'] = [130]
+    person['FootSize'] = [8]
+    
+    op=nb.predict(person)
+    print("Female: {0} Male: {1}".format(op[0], op[1]))
+    
+if __name__ == "__main__":
+    main()
+</pre>
+</center>
+</body>
+</html>
