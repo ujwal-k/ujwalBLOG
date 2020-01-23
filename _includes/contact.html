@@ -70,28 +70,25 @@
 
                     <div id="contact-status"></div>
 
-                    <form action="https://formspree.io/xbjgbnve" id="contactform" method="POST">
-                        <p class="form-group" id="contact-name">
-                            <label for="name">Your Name</label>
-                            <input type="text" name="name" class="form-control name-contact" id="inputSuccess" placeholder="Name..." />
-                        </p>
-                        <p class="form-group" id="contact-email"> 
-                            <label for="email">Your Email</label>
-                            <input type="text" name="email" class="form-control email-contact" id="inputSuccess" placeholder="Email..." />
-                        </p>
+                   <form action="https://formspree.io/xbjgbnve" method="POST">
+                        <label>
+                         Your Name:
+                         <input type="text" name="_replyto">
+                        </label>
+                        <label>
+                         Your email:
+                         <input type="text" name="_replyto">
+                        </label>
+                        <label>
+                         Your message:
+                         <textarea name="message"></textarea>
+                        </label>
 
-                        <p class="form-group" id="contact-message">
-                            <label for="message">Your Message</label>
-                            <textarea name="message" cols="88" rows="6" class="form-control message-contact" id="inputError" placeholder="Your Message..."></textarea>
-                        </p>
-                        <input type="reset" name="reset" value="CLEAR" class="reset">
-                        <!-- <input type="submit" name="submit" value="SEND MESSAGE" class="submit">-->
+                        <!-- your other form fields go here -->
 
-                        <section class="button-demo" style="display: inline-block;">
-                            <button type="submit" name="submit" data-color="green" data-style="expand-left">SEND MESSAGE</button>
-                        </section>
+                        <button type="submit">Send</button>
+                   </form>
 
-                    </form>
                 </div>
                 <!-- /Contact Form -->
             </div>
