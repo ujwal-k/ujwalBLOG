@@ -1,3 +1,3 @@
 # Ujwal's blog
 
-This theme is designed by Ujwal
+This website now stands outdated & obsolete.
